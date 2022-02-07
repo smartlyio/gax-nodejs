@@ -112,6 +112,7 @@ export class GrpcClient {
   grpcVersion: string;
   fallback: boolean | 'rest' | 'proto';
   private static protoCache = new Map<string, grpc.GrpcObject>();
+  private static jsonHashes: WeakMap<any, string> = new WeakMap<any, string>();
 
   /**
    * Key for proto cache map. We are doing our best to make sure we respect
@@ -140,6 +141,7 @@ export class GrpcClient {
    */
   static clearProtoCache() {
     GrpcClient.protoCache.clear();
+    GrpcClient.jsonHashes = new WeakMap<any, string>();
   }
 
   /**
@@ -292,7 +294,8 @@ export class GrpcClient {
   }
 
   loadProtoJSON(json: protobuf.INamespace, ignoreCache = false) {
-    const hash = objectHash(json).toString();
+    const hash = GrpcClient.jsonHashes.get(json) ?? objectHash(json).toString();
+    GrpcClient.jsonHashes.set(json, hash);
     const cached = GrpcClient.protoCache.get(hash);
     if (cached && !ignoreCache) {
       return cached;
